@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caique Vianna Web - Gestão de Custos</title>
+    <!-- Fonte Inter para um visual moderno e limpo -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- VARIÁVEIS DE CORES (MODO ESCURO POR PADRÃO) --- */
+        :root {
+            --bg: #050505;
+            --card: #111111;
+            --accent: #ffffff;
+            --text: #ffffff;
+            --text-dim: #777;
+            --border: #222;
+            --danger: #ff4444;
+            --trans: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- ESTILO MODO CLARO --- */
+        body.light-mode {
+            --bg: #f0f0f0;
+            --card: #ffffff;
+            --accent: #000000;
+            --text: #000000;
+            --text-dim: #555;
+            --border: #ddd;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            overflow-x: hidden; 
+            transition: var(--trans); 
+        }
+
+        /* --- ANIMAÇÕES --- */
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+
+        /* --- TELA DE LOGIN --- */
+        #login-screen { 
+            position: fixed; inset: 0; 
+            background: var(--bg); 
+            z-index: 5000; 
+            display: flex; align-items: center; justify-content: center; 
+        }
+        .login-box { 
+            background: var(--card); 
+            padding: 50px; 
+            border: 1px solid var(--border); 
+            text-align: center; 
+            width: 380px; 
+            border-radius: 12px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        /* --- INPUTS E BOTÕES GERAIS --- */
+        input, select, textarea { 
+            width: 100%; background: rgba(128,128,128,0.1); border: 1px solid var(--border); 
+            padding: 14px; color: var(--text); margin-bottom: 15px; border-radius: 8px; outline: none; transition: var(--trans); 
+        }
+        input:focus, textarea:focus { border-color: var(--accent); }
+        textarea { resize: vertical; min-height: 150px; font-size: 14px; line-height: 1.5; }
+
+        button { 
+            background: var(--accent); color: var(--bg); border: none; padding: 12px; 
+            font-weight: 700; cursor: pointer; border-radius: 8px; transition: var(--trans); 
+            text-transform: uppercase; letter-spacing: 1px; width: 100%; 
+        }
+        button:hover { opacity: 0.8; transform: scale(1.02); }
+        .btn-sec { background: transparent; color: var(--text); border: 1px solid var(--border); margin-top: 10px; }
+        .btn-del { 
+            background: transparent; color: var(--danger); border: none; 
+            width: auto; padding: 5px; font-size: 18px; cursor: pointer; 
+            opacity: 0.5; transition: var(--trans); 
+        }
+        .btn-del:hover { opacity: 1; transform: scale(1.2); }
+
+        /* --- MODAL DE CADASTRO --- */
+        .modal-overlay { 
+            position: fixed; inset: 0; 
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); 
+            z-index: 1000; display: none; align-items: center; justify-content: center; 
+        }
+        .modal-content { 
+            background: var(--card); padding: 40px; border-radius: 15px; 
+            width: 450px; border: 1px solid var(--border); 
+        }
+
+        /* --- LAYOUT PRINCIPAL --- */
+        #main-content { display: none; padding: 40px; max-width: 1400px; margin: auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
+        header h1 { font-weight: 900; font-size: 2.5rem; letter-spacing: -2px; }
+
+        .container { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; }
+
+        /* --- CARDS E ACORDEÕES --- */
+        .card { 
+            background: var(--card); border: 1px solid var(--border); 
+            border-radius: 12px; overflow: hidden; margin-bottom: 25px; 
+        }
+        .card-header { 
+            padding: 25px; display: flex; justify-content: space-between; 
+            align-items: center; cursor: pointer; background: rgba(128,128,128,0.05); 
+        }
+        .card-header h2 { font-size: 0.8rem; letter-spacing: 4px; color: var(--text-dim); text-transform: uppercase; margin: 0; }
+        
+        .card-body { 
+            max-height: 0; overflow: hidden; transition: max-height 0.5s ease; 
+        }
+        .card-body.visible { max-height: 3000px; padding: 20px; }
+
+        .acc-item { border-bottom: 1px solid var(--border); }
+        .acc-trigger { padding: 15px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: var(--trans); }
+        .acc-trigger:hover { background: rgba(128,128,128,0.05); }
+        
+        .acc-content { 
+            max-height: 0; overflow: hidden; transition: max-height 0.4s ease; 
+            background: rgba(0,0,0,0.1); 
+        }
+        .acc-content.show { max-height: 1000px; padding: 20px; border-top: 1px solid var(--border); }
+
+        .add-circle { 
+            width: 30px; height: 30px; background: var(--accent); color: var(--bg); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; cursor: pointer; 
+        }
+
+        .cli-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #333; margin-right: 15px; border: 1px solid var(--border); }
+
+        /* --- CUSTOS E TOTAIS --- */
+        .custo-box { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .reserva-total { font-size: 3.5rem; font-weight: 900; letter-spacing: -3px; margin-top: 10px; }
+
+        /* --- TOGGLE TEMA --- */
+        .theme-btn { width: 60px; height: 30px; background: #222; border-radius: 30px; cursor: pointer; position: relative; padding: 5px; }
+        .ball { 
+            width: 20px; height: 20px; background: #fff; border-radius: 50%; 
+            transition: var(--trans); display: flex; align-items: center; 
+            justify-content: center; font-size: 12px; 
+        }
+        .light .ball { transform: translateX(30px); background: #000; color: #fff; }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+            header h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <div id="login-screen">
+        <div class="login-box fade-in">
+            <h2 style="font-weight: 900; letter-spacing: -2px; font-size: 2.2rem; margin-bottom: 5px;">LOGIN</h2>
+            <p style="color: var(--text-dim); margin-bottom: 30px; font-size: 10px; letter-spacing: 3px; text-transform: uppercase;">Caique Vianna Web</p>
+            <input type="text" id="user" placeholder="Usuário">
+            <input type="password" id="pass" placeholder="Senha">
+            <button onclick="login()">Acessar Painel</button>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div id="main-content">
+        <header>
+            <h1>Caique Vianna Web</h1>
+            <div class="theme-btn" onclick="toggleTheme()" id="t-btn">
+                <div class="ball">🌙</div>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- COLUNA DA ESQUERDA: PRODUTOS E CLIENTES -->
+            <div id="col-materiais">
+                <!-- SEÇÃO PRODUTOS -->
+                <div class="card">
+                    <div class="card-header" onclick="toggleCardBody('body-estoque')">
+                        <h2>Produtos em Estoque</h2>
+                        <div class="add-circle" onclick="event.stopPropagation(); openModal('categoria')">+</div>
+                    </div>
+                    <div class="card-body" id="body-estoque">
+                        <div id="render-estoque"></div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO CLIENTES -->
+                <div class="card">
+                    <div class="card-header" onclick="toggleCardBody('body-clientes')">
+                        <h2>Orçamentos Clientes</h2>
+                        <div class="add-circle" onclick="event.stopPropagation(); openModal('cliente')">+</div>
+                    </div>
+                    <div class="card-body" id="body-clientes">
+                        <div id="render-clientes"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUNA DA DIREITA: CUSTOS E RESULTADO -->
+            <div id="col-custos">
+                <!-- CUSTOS FIXOS -->
+                <div class="card" style="padding: 30px;">
+                    <h2 style="font-size: 0.7rem; letter-spacing: 3px; color: var(--text-dim); margin-bottom: 25px;">CUSTOS FIXOS MENSAL</h2>
+                    <div class="custo-box">
+                        <div><label style="font-size: 9px; color: var(--text-dim);">LUZ</label><input type="number" id="luz" placeholder="0" oninput="calculate()"></div>
+                        <div><label style="font-size: 9px; color: var(--text-dim);">NET</label><input type="number" id="net" placeholder="0" oninput="calculate()"></div>
+                        <div><label style="font-size: 9px; color: var(--text-dim);">IPTU</label><input type="number" id="iptu" placeholder="0" oninput="calculate()"></div>
+                    </div>
+                    <div style="background: rgba(128,128,128,0.1); padding: 25px; border-radius: 10px; border: 1px solid var(--border);">
+                        <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 13px;">HORAS TRABALHADAS (SESSÃO)</label>
+                        <input type="number" id="total-hours" placeholder="0" style="margin-bottom: 0;" oninput="calculate()">
+                    </div>
+                </div>
+
+                <!-- RESULTADO FINAL -->
+                <div class="card" style="padding: 30px; border-color: var(--accent);">
+                    <h2 style="font-size: 0.7rem; letter-spacing: 3px; color: var(--text-dim); margin-bottom: 25px;">TOTALIZADOR DE RESERVA</h2>
+                    <div style="color: var(--text-dim); font-size: 11px; margin-bottom: 10px;">Custo Base (Mat + Fixo): R$ <span id="base-val">0.00</span></div>
+                    <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 25px;">
+                        <input type="number" id="margin" placeholder="0" style="width: 100px; margin: 0;" oninput="calculate()">
+                        <span style="font-size: 13px; font-weight: 600;">% Margem de Lucro</span>
+                    </div>
+                    <div class="reserva-total" id="final-total">R$ 0,00</div>
+                </div>
+
+                <!-- BLOCO DE NOTAS (NOVO) -->
+                <div class="card" style="padding: 30px;">
+                    <h2 style="font-size: 0.7rem; letter-spacing: 3px; color: var(--text-dim); margin-bottom: 25px;">BLOCO DE NOTAS</h2>
+                    <textarea id="notepad" placeholder="Digite suas anotações aqui... elas serão salvas automaticamente." oninput="saveNotepad()"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DINÂMICO -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-content fade-in">
+            <h3 id="modal-title" style="margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px;"></h3>
+            <div id="modal-fields"></div>
+            <button id="modal-save-btn">Salvar Alterações</button>
+            <button class="btn-sec" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // --- BASE DE DADOS LOCAL COM PERSISTÊNCIA ---
+        let db = JSON.parse(localStorage.getItem('cv_db')) || { estoque: [], clientes: [] };
+        let matSum = 0;
+
+        // Ao carregar a página
+        window.onload = () => {
+            loadInputs();
+            renderEstoque();
+            renderClientes();
+            updateGlobalMatSum();
+            calculate();
+            document.getElementById('notepad').value = localStorage.getItem('cv_notes') || '';
+        };
+
+        function saveDb() {
+            localStorage.setItem('cv_db', JSON.stringify(db));
+        }
+
+        function saveNotepad() {
+            const content = document.getElementById('notepad').value;
+            localStorage.setItem('cv_notes', content);
+        }
+
+        function saveInputs() {
+            const inputs = {
+                luz: document.getElementById('luz').value,
+                net: document.getElementById('net').value,
+                iptu: document.getElementById('iptu').value,
+                hours: document.getElementById('total-hours').value,
+                margin: document.getElementById('margin').value
+            };
+            localStorage.setItem('cv_inputs', JSON.stringify(inputs));
+        }
+
+        function loadInputs() {
+            const saved = JSON.parse(localStorage.getItem('cv_inputs'));
+            if(saved) {
+                document.getElementById('luz').value = saved.luz;
+                document.getElementById('net').value = saved.net;
+                document.getElementById('iptu').value = saved.iptu;
+                document.getElementById('total-hours').value = saved.hours;
+                document.getElementById('margin').value = saved.margin;
+            }
+        }
+
+        // --- SISTEMA DE LOGIN ---
+        function login() {
+            const user = document.getElementById('user').value;
+            const pass = document.getElementById('pass').value;
+            if(user === 'caiquevianna' && pass === '69caique69') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+            } else {
+                alert("Dados de acesso incorretos!");
+            }
+        }
+
+        // --- SISTEMA DE TEMA (DARK/LIGHT) ---
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const btn = document.getElementById('t-btn');
+            btn.classList.toggle('light');
+            btn.querySelector('.ball').innerText = btn.classList.contains('light') ? '☀️' : '🌙';
+        }
+
+        // --- CONTROLE DE EXIBIÇÃO (ACORDEÕES) ---
+        function toggleCardBody(id) {
+            document.getElementById(id).classList.toggle('visible');
+        }
+
+        function toggleAcc(id) {
+            const el = document.getElementById(id);
+            if(el) el.classList.toggle('show');
+        }
+
+        // --- CONTROLE DO MODAL ---
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalFields = document.getElementById('modal-fields');
+        const modalSaveBtn = document.getElementById('modal-save-btn');
+
+        function openModal(type, extra = null) {
+            modal.style.display = 'flex';
+            modalFields.innerHTML = '';
+
+            if(type === 'categoria') {
+                modalTitle.innerText = "Nova Categoria de Produto";
+                modalFields.innerHTML = `<input type="text" id="m-cat-nome" placeholder="Ex: Tintas, Agulhas...">`;
+                modalSaveBtn.onclick = () => {
+                    const n = document.getElementById('m-cat-nome').value;
+                    if(n) { 
+                        db.estoque.push({ nome: n, subs: [] }); 
+                        saveDb();
+                        renderEstoque(); 
+                        closeModal(); 
+                        document.getElementById('body-estoque').classList.add('visible'); 
+                    }
+                };
+            } 
+            else if(type === 'sub') {
+                modalTitle.innerText = "Adicionar Subproduto";
+                modalFields.innerHTML = `
+                    <input type="text" id="m-sub-nome" placeholder="Nome (Ex: Preto 30ml)">
+                    <input type="number" id="m-sub-v" placeholder="Preço Pago (Total)">
+                    <input type="number" id="m-sub-q" placeholder="Qtd Total (ml ou un)">
+                `;
+                modalSaveBtn.onclick = () => {
+                    const n = document.getElementById('m-sub-nome').value;
+                    const v = parseFloat(document.getElementById('m-sub-v').value);
+                    const q = parseFloat(document.getElementById('m-sub-q').value);
+                    if(n && v && q) { 
+                        db.estoque[extra].subs.push({ nome: n, valor: v, qtd: q, unit: v/q }); 
+                        saveDb();
+                        renderEstoque(); 
+                        closeModal(); 
+                        setTimeout(() => toggleAcc('acc-cat-'+extra), 100);
+                    }
+                };
+            } 
+            else if(type === 'cliente') {
+                modalTitle.innerText = "Novo Cadastro de Cliente";
+                modalFields.innerHTML = `
+                    <input type="text" id="m-cli-nome" placeholder="Nome Completo">
+                    <label style="font-size:10px; color:var(--text-dim); display:block; margin-bottom:5px;">Foto do Cliente (Opcional):</label>
+                    <input type="file" id="m-cli-foto" accept="image/*">
+                `;
+                modalSaveBtn.onclick = () => {
+                    const n = document.getElementById('m-cli-nome').value;
+                    const f = document.getElementById('m-cli-foto').files[0];
+                    if(n) {
+                        if(f) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => { 
+                                db.clientes.push({ nome: n, foto: e.target.result, materiais: [], total: 0 }); 
+                                saveDb(); renderClientes(); closeModal(); document.getElementById('body-clientes').classList.add('visible'); 
+                            };
+                            reader.readAsDataURL(f);
+                        } else { 
+                            db.clientes.push({ nome: n, foto: '', materiais: [], total: 0 }); 
+                            saveDb(); renderClientes(); closeModal(); document.getElementById('body-clientes').classList.add('visible'); 
+                        }
+                    }
+                };
+            } 
+            else if(type === 'addMatCli') {
+                modalTitle.innerText = "Adicionar Material ao Uso";
+                let opts = db.estoque.map((cat, ci) => 
+                    cat.subs.map((s, si) => `<option value="${ci}|${si}">${cat.nome} > ${s.nome}</option>`).join('')
+                ).join('');
+                
+                if(!opts) {
+                    modalFields.innerHTML = `<p style="font-size:12px; color:var(--danger)">Nenhum produto cadastrado no estoque!</p>`;
+                    modalSaveBtn.style.display = 'none';
+                } else {
+                    modalSaveBtn.style.display = 'block';
+                    modalFields.innerHTML = `
+                        <select id="m-cli-mat-sel">${opts}</select>
+                        <input type="number" id="m-cli-mat-qtd" placeholder="Quantidade que será usada">
+                    `;
+                    modalSaveBtn.onclick = () => {
+                        const val = document.getElementById('m-cli-mat-sel').value;
+                        const q = parseFloat(document.getElementById('m-cli-mat-qtd').value);
+                        if(val && q) {
+                            const [ci, si] = val.split('|');
+                            const sub = db.estoque[ci].subs[si];
+                            const custo = sub.unit * q;
+                            db.clientes[extra].materiais.push({ nome: `${db.estoque[ci].nome} (${sub.nome})`, custo: custo });
+                            db.clientes[extra].total += custo;
+                            saveDb();
+                            updateGlobalMatSum(); 
+                            renderClientes(); 
+                            calculate(); 
+                            closeModal(); 
+                            setTimeout(() => toggleAcc('acc-cli-'+extra), 100);
+                        }
+                    };
+                }
+            }
+        }
+
+        function closeModal() { modal.style.display = 'none'; }
+
+        // --- FUNÇÕES DE EXCLUSÃO ---
+        function deleteItem(type, idx, subIdx = null) {
+            if(!confirm("Deseja realmente excluir este item?")) return;
+            
+            if(type === 'cat') db.estoque.splice(idx, 1);
+            else if(type === 'sub') db.estoque[idx].subs.splice(subIdx, 1);
+            else if(type === 'cli') db.clientes.splice(idx, 1);
+            
+            saveDb();
+            updateGlobalMatSum();
+            renderEstoque();
+            renderClientes();
+            calculate();
+        }
+
+        function updateGlobalMatSum() {
+            matSum = db.clientes.reduce((acc, c) => acc + c.total, 0);
+        }
+
+        // --- RENDERIZAÇÃO DE LISTAS ---
+        function renderEstoque() {
+            const container = document.getElementById('render-estoque');
+            if(db.estoque.length === 0) {
+                container.innerHTML = `<p style="font-size:11px; color:var(--text-dim); text-align:center; padding:20px;">Nenhuma categoria adicionada.</p>`;
+                return;
+            }
+            container.innerHTML = db.estoque.map((cat, i) => `
+                <div class="acc-item fade-in">
+                    <div class="acc-trigger">
+                        <div style="flex-grow:1" onclick="toggleAcc('acc-cat-${i}')">
+                            <span style="font-size:13px; font-weight:700;">${cat.nome}</span>
+                        </div>
+                        <button class="btn-del" onclick="deleteItem('cat', ${i})" style="margin-right:15px">×</button>
+                        <button onclick="openModal('sub', ${i})" style="width:auto; padding:5px 12px; font-size:10px;">+ Subproduto</button>
+                    </div>
+                    <div class="acc-content" id="acc-cat-${i}">
+                        <table style="width:100%; font-size:11px; color:var(--text-dim); border-collapse: collapse;">
+                            ${cat.subs.map((s, si) => `
+                                <tr>
+                                    <td style="padding:8px 0; border-bottom:1px solid rgba(128,128,128,0.1)">${s.nome}</td>
+                                    <td style="text-align:right; border-bottom:1px solid rgba(128,128,128,0.1)">R$ ${s.unit.toFixed(2)}/un</td>
+                                    <td style="text-align:right; border-bottom:1px solid rgba(128,128,128,0.1)">
+                                        <button class="btn-del" onclick="deleteItem('sub', ${i}, ${si})">×</button>
+                                    </td>
+                                </tr>`).join('')}
+                        </table>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderClientes() {
+            const container = document.getElementById('render-clientes');
+            if(db.clientes.length === 0) {
+                container.innerHTML = `<p style="font-size:11px; color:var(--text-dim); text-align:center; padding:20px;">Nenhum cliente cadastrado.</p>`;
+                return;
+            }
+            container.innerHTML = db.clientes.map((cli, i) => `
+                <div class="acc-item fade-in">
+                    <div class="acc-trigger">
+                        <div style="display:flex; align-items:center; flex-grow:1" onclick="toggleAcc('acc-cli-${i}')">
+                            <img src="${cli.foto || 'https://via.placeholder.com/45/222/fff?text=?'}" class="cli-img">
+                            <span style="font-size:13px; font-weight:700;">${cli.nome}</span>
+                        </div>
+                        <button class="btn-del" onclick="deleteItem('cli', ${i})" style="margin-right:15px">×</button>
+                        <button onclick="openModal('addMatCli', ${i})" style="width:auto; padding:5px 12px; font-size:10px;">+ Material</button>
+                    </div>
+                    <div class="acc-content" id="acc-cli-${i}">
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:15px;">
+                            ${cli.materiais.map(m => `
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom: 1px dashed var(--border); padding-bottom:3px;">
+                                    <span>${m.nome}</span>
+                                    <span>R$ ${m.custo.toFixed(2)}</span>
+                                </div>`).join('')}
+                        </div>
+                        <div style="font-weight:900; border-top:1px solid var(--accent); padding-top:10px; font-size:14px; text-align:right;">
+                            Total Materiais: R$ ${cli.total.toFixed(2)}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- LÓGICA DE CÁLCULO FINANCEIRO ---
+        function calculate() {
+            const luz = parseFloat(document.getElementById('luz').value) || 0;
+            const net = parseFloat(document.getElementById('net').value) || 0;
+            const iptu = parseFloat(document.getElementById('iptu').value) || 0;
+            const horas = parseFloat(document.getElementById('total-hours').value) || 0;
+
+            const valorHoraUnificado = (luz + net + iptu) / 30 / 24;
+            const custoFixoTotal = valorHoraUnificado * horas;
+
+            const base = matSum + custoFixoTotal;
+            document.getElementById('base-val').innerText = base.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+            const margemPerc = parseFloat(document.getElementById('margin').value) || 0;
+            const valorComMargem = base + (base / 100 * margemPerc);
+
+            document.getElementById('final-total').innerText = `R$ ${valorComMargem.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            saveInputs();
+        }
+    </script>
+</body>
+</html>
